@@ -10,7 +10,7 @@ Tested on Ubuntu 18.04
 make
 
 ```
-##Clean up the results
+## Clean up the results
 
 ```bash
 make clean
