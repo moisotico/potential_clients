@@ -2,8 +2,12 @@
 #include <fstream>
 #include <string>
 #include <vector> 
+#include <utility>
+#include <algorithm>
+
 using namespace std;
 
+long unsigned int NUM_TARGET_CUSTOMERS = 100;
 // PotentialClient class
 class PotentialClient
 {
@@ -63,10 +67,6 @@ float PotentialClient::updateProbability(){
     probability += base_probability*industryCriteria();
     probability += base_probability*recomendationCriteria();
     probability += base_probability*connectionCriteria();
-    if (probability > 0.08){
-        cout << "PersonID: " << person_id << " ";
-        cout << "probability: " << probability << "\n";
-    }
     return probability;
 }
 
@@ -92,14 +92,17 @@ float PotentialClient::roleCriteria(){
     else if ((current_role.find("director") != string::npos) ||
         (current_role.find("manager") != string::npos) ||
         (current_role.find("project") != string::npos))
+    {
             return role_probability = 0.2;
-
+    }
     // If the words "specialist", "marketing", "" or "assistant"
     // appear reduce probability by a 10%.
     else if ((current_role.find("specialist") != string::npos) ||
         (current_role.find("marketing") != string::npos) ||
         (current_role.find("assistant") != string::npos))
+    {
             return role_probability = -0.1;
+    }
     else
         return role_probability = 0.0;
 
@@ -120,8 +123,8 @@ float PotentialClient::countryCriteria(){
         (country == "Italy") ||
         (country == "Germany") ||
         (country == "France") ||
-        (country == "Canada")   
-    ){
+        (country == "Canada"))
+    {
         return country_probability = 0.3;
     }
     else
@@ -198,12 +201,9 @@ float PotentialClient::connectionCriteria(){
 /**
  * @brief: Read the input file people.in and check probability  
  */
-void readProbabilityInFile(string theFile)
+void readProbabilityInFile(string input_name, vector< pair <string, float> > &vec)
 {
-    ifstream inFile(theFile);
-    
-    // vec is a vector that stores PotentialClient instances
-    vector<PotentialClient> vec;
+    ifstream inFile(input_name);
 
     if (inFile.is_open())
     {
@@ -231,43 +231,61 @@ void readProbabilityInFile(string theFile)
             if (!str.empty())
                 contact.number_of_connections = stoi(str, nullptr);
             contact.updateProbability();
-            vec.push_back(contact);
+            vec.push_back(make_pair(contact.person_id, contact.probability));
         }
-        cout << "File read! \n" << "People evaluated: " << vec.size() << "\n";
 
         inFile.close();
     }
     else
-        cout << "ERROR: Unable to open people.in file! \n";
+        cout << "ERROR: Unable to open "<< input_name << "file \n";;
 }
 
 
 /**
- * @brief: Write the output file people.out   
+ * @brief: Sorting criteria for the vector pairs   
  */
-void writeFile(string theFile)
-{
+bool sortBySecDesc(const pair<string,float> &a, 
+                   const pair<string,float> &b) 
+{ 
+       return a.second>b.second; 
+} 
 
-    ofstream outfile(theFile);
 
-    if (outfile.is_open())
-    {
-        /*
-        Write to outfile if criteria meets  
-        */
+/**
+ * @brief: Write the output file people.out with the highest k elements   
+ */
+void writeFile(int k, string outputName,  vector< pair <string, float> > &vec){
+    ofstream outfile(outputName);
+    int i = 0;
+    if (outfile.is_open()){
+        for ( auto it = vec.begin(); i < k; it++, i++){
+            outfile << it->first << "\n";
+        }
         outfile.close();
     }
     else
-        cout << "ERROR: Unable to write people.out file \n";
+        cout << "ERROR: Unable to write "<< outputName << "file \n";
 }
+
 
 int main()
 {
-    // TODO: printlines
-    cout << "Starting to read the file... \n";
+    // vec is a vector of pair with the person_id and its probability
+    vector< pair <string, float> > vec;
 
-    readProbabilityInFile("./data/people.in");
+    cout << "Starting to read the file... \n";
+    readProbabilityInFile("./data/people.in", vec);
+    cout << "File read! \n" << "People evaluated: " << vec.size() << "\n";
+
+    //sort the vector of pairs in descending order
+    sort(vec.begin(), vec.end(), sortBySecDesc);
     
-    // TODO: finish writeFile
-    //    writeFile("people.out");
+    //check the file size
+    long unsigned int customers_lenght = NUM_TARGET_CUSTOMERS;
+    if( vec.size() < NUM_TARGET_CUSTOMERS){
+        customers_lenght = vec.size();
+    }
+
+    cout << "Starting to write the .out file... \n";
+    writeFile(customers_lenght, "./data/people.out", vec);
 }
