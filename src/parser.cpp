@@ -242,6 +242,7 @@ void writeFile(int k, string outputName,  vector< pair <string, float> > &vec){
             outfile << it->first << "\n";
         }
         outfile.close();
+        cout << "Done! Check the output file at: " << outputName << "\n";
     }
     else
         cout << "ERROR: Unable to write "<< outputName << " file \n";
@@ -264,6 +265,5 @@ int main()
     if( vec.size() < NUM_TARGET_CUSTOMERS){
         customers_lenght = vec.size();
     }
-    cout << "Starting to write the .out file... \n";
     writeFile(customers_lenght, "./data/people.out", vec);
 }
